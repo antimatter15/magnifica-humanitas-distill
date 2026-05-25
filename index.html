@@ -207,13 +207,13 @@ nav.toc .sub{margin:5px 0 5px 26px;}
   background:#fff; border:1px solid var(--rule); border-radius:3px; overflow:hidden;
   box-shadow:0 1px 0 rgba(0,0,0,.02);
 }
-.fig-head{padding:18px 22px 4px; }
+.fig-head{padding:22px 26px 6px; }
 .fig-num{font-family:var(--sans); font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--accent);}
 .fig-title{font-family:var(--sans); font-weight:700; font-size:18px; margin:4px 0 0; color:var(--ink);}
-.fig-body{padding:6px 22px 18px;}
-.fig-cap{font-family:var(--sans); font-size:13px; line-height:1.55; color:var(--soft); padding:0 22px 20px; max-width:820px;}
+.fig-body{padding:12px 26px 30px;}
+.fig-cap{font-family:var(--sans); font-size:13px; line-height:1.55; color:var(--soft); margin-top:22px; padding:0 26px 20px; max-width:820px;}
 .fig-cap b{color:#333;}
-.ui-row{display:flex; flex-wrap:wrap; gap:8px; padding:4px 22px 14px; align-items:center;}
+.ui-row{display:flex; flex-wrap:wrap; gap:8px; padding:6px 26px 18px; align-items:center;}
 button.toggle, .seg button{
   font-family:var(--sans); font-size:13px; font-weight:600; border:1px solid var(--rule);
   background:#fff; color:var(--ink); padding:7px 14px; border-radius:999px; cursor:pointer; transition:.15s;
@@ -224,6 +224,12 @@ button.toggle:hover,.seg button:hover{border-color:var(--ink);}
 .seg button:last-child{border-right:none;}
 .seg button.on{background:var(--ink); color:#fff;}
 .hint{font-family:var(--sans); font-size:12px; color:var(--faint); letter-spacing:.02em;}
+@media(max-width:640px){
+  .fig-head{padding:24px 24px 8px;}
+  .fig-body{padding:14px 24px 34px;}
+  .fig-cap{margin-top:26px; padding:0 24px 22px;}
+  .ui-row{padding:8px 24px 20px;}
+}
 
 /* ---------- endnotes ---------- */
 section.notes{max-width:920px; margin-top:60px; border-top:1px solid var(--ink); padding-top:24px;}
@@ -1515,10 +1521,22 @@ function wireSeg(segId, cb){
   var host = document.getElementById("babelViz");
   if(!host || !window.d3) return;
   var mode = "babel";
-  function draw(){
-    host.innerHTML="";
+  var hasDrawn = false;
+  function dimensions(){
     var w = W(host, 760);
     var h = mode==="babel" ? (w < 430 ? 410 : 360) : (w < 430 ? 270 : 320);
+    return {w:w, h:h};
+  }
+  function reserveSpace(){
+    var d = dimensions();
+    var cssW = host.clientWidth || d.w;
+    host.style.minHeight = Math.round(cssW * d.h / d.w) + "px";
+  }
+  function draw(){
+    hasDrawn = true;
+    host.innerHTML="";
+    var d = dimensions(), w = d.w, h = d.h;
+    host.style.minHeight = "";
     var svg = d3.select(host).append("svg")
       .attr("width","100%").attr("viewBox","0 0 "+w+" "+h)
       .attr("font-family",SANS);
@@ -1546,9 +1564,12 @@ function wireSeg(segId, cb){
       // confusion of tongues — scattered glyphs at the dissolving top
       var glyphs = ["A","ℵ","あ","Я","ب","王","Σ","?","#"];
       glyphs.forEach(function(gl,k){
-        svg.append("text").attr("x", cx + (Math.random()-0.5)*baseW)
-          .attr("y", 40 + Math.random()*60).attr("fill", C.accent)
-          .attr("font-size", 13+Math.random()*10).attr("opacity",0)
+        var spread = [-.32,-.20,-.08,.08,.22,.34,-.28,.02,.30][k];
+        var lift = [56,44,68,50,78,62,84,36,72][k];
+        var size = [14,17,16,20,15,18,14,19,15][k];
+        svg.append("text").attr("x", cx + spread*baseW)
+          .attr("y", lift).attr("fill", C.accent)
+          .attr("font-size", size).attr("opacity",0)
           .attr("text-anchor","middle").text(gl)
           .transition().delay(700+k*70).duration(400).attr("opacity",0.8);
       });
@@ -1586,9 +1607,27 @@ function wireSeg(segId, cb){
         cx, labelY, labelMax, 15, {"text-anchor":"middle","fill":C.soft,"font-size":12});
     }
   }
-  wireSeg("babelSeg", function(m){ mode=m; draw(); });
-  draw();
-  window.addEventListener("resize", debounce(draw,200));
+  function reveal(){
+    if(!hasDrawn) draw();
+  }
+  wireSeg("babelSeg", function(m){
+    mode=m;
+    if(hasDrawn) draw();
+    else reserveSpace();
+  });
+  reserveSpace();
+  if("IntersectionObserver" in window){
+    var obs = new IntersectionObserver(function(entries){
+      if(entries.some(function(entry){ return entry.isIntersecting; })){
+        reveal();
+        obs.disconnect();
+      }
+    }, {threshold:0.18});
+    obs.observe(host);
+  } else {
+    reveal();
+  }
+  onWidthResize(host, function(){ hasDrawn ? draw() : reserveSpace(); }, 200);
 })();
 
 /* ============================================================
@@ -1659,7 +1698,7 @@ function wireSeg(segId, cb){
     showInfo(data[0]);
   }
   draw();
-  window.addEventListener("resize", debounce(draw,200));
+  onWidthResize(host, draw, 200);
 })();
 
 /* ============================================================
@@ -1726,7 +1765,7 @@ function wireSeg(segId, cb){
     detail({t:"Considered together", n:"“A harmonious relationship between these principles requires that they be considered collectively” (§46). Hover a principle to read it; all radiate from, and return to, the dignity of the person."});
   }
   draw();
-  window.addEventListener("resize", debounce(draw,200));
+  onWidthResize(host, draw, 200);
 })();
 
 /* ============================================================
@@ -1753,7 +1792,7 @@ function wireSeg(segId, cb){
   function draw(){
     host.innerHTML="";
     var rows = mode==="classic"?classic:digital;
-    var w=W(host,720), compact=w < 520, rowh=compact ? 78 : 58, h=rows.length*rowh+(compact ? 92 : 30);
+    var w=W(host,720), compact=w < 520, rowh=compact ? 108 : 58, h=rows.length*rowh+(compact ? 104 : 30);
     var svg=d3.select(host).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
     rows.forEach(function(d,i){
       var y=15+i*rowh;
@@ -1766,9 +1805,11 @@ function wireSeg(segId, cb){
       g.append("rect").attr("x",x).attr("y",y).attr("width",bw).attr("height",rowh-12).attr("rx",4)
         .attr("fill",fill).attr("stroke", d.flag?C.accent:C.rule).attr("stroke-width", d.flag?0:1)
         .attr("opacity",0).transition().delay(i*70).duration(320).attr("opacity",1);
-      g.append("text").attr("x",w/2).attr("y",y+18).attr("text-anchor","middle")
-        .attr("fill", d.flag?"#fff":C.ink).attr("font-size",13).attr("font-weight",700).text(d.t);
-      wrappedText(g, d.s, w/2, y+34, Math.floor((bw-20)/6.4), 12,
+      var titleMax = Math.floor((bw-24)/7.2);
+      var titleLines = wrapLines(d.t, titleMax).length;
+      wrappedText(g, d.t, w/2, y+(compact?24:18), titleMax, compact?16:14,
+        {"text-anchor":"middle","fill": d.flag?"#fff":C.ink,"font-size":13,"font-weight":700});
+      wrappedText(g, d.s, w/2, y+(compact ? 28 + titleLines*16 : 34), Math.floor((bw-20)/6.4), compact?14:12,
         {"text-anchor":"middle","fill": d.flag?"rgba(255,255,255,.85)":C.soft,"font-size":11});
       // arrows
       if(i<rows.length-1){
@@ -1786,7 +1827,7 @@ function wireSeg(segId, cb){
   }
   wireSeg("subsSeg", function(m){ mode=m; draw(); });
   draw();
-  window.addEventListener("resize", debounce(draw,200));
+  onWidthResize(host, draw, 200);
 })();
 
 /* ============================================================
@@ -1813,13 +1854,13 @@ function wireSeg(segId, cb){
   var holder=document.createElement("div"); host.appendChild(holder);
   function draw(){
     holder.innerHTML="";
-    var w=W(holder,760), compact=w < 520, colW=(w-24)/2, rowh=compact ? 88 : 64, h=Math.max(imitate.length,cannot.length)*rowh+(compact ? 74 : 58);
+    var w=W(holder,760), compact=w < 520, colW=(w-24)/2, rowh=compact ? 140 : 64, h=Math.max(imitate.length,cannot.length)*rowh+(compact ? 92 : 58);
     var svg=d3.select(holder).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
     // headers
     svg.append("text").attr("x",colW/2).attr("y",18).attr("text-anchor","middle").attr("fill",C.blue).attr("font-size",12).attr("font-weight",800).attr("letter-spacing","0.08em").text("CAN IMITATE");
     svg.append("text").attr("x",w-colW/2).attr("y",18).attr("text-anchor","middle").attr("fill",C.accent).attr("font-size",12).attr("font-weight",800).attr("letter-spacing","0.08em").text("CANNOT BE");
     // divider
-    svg.append("line").attr("x1",w/2).attr("x2",w/2).attr("y1",28).attr("y2",h-30).attr("stroke",C.rule).attr("stroke-dasharray","3 4");
+    svg.append("line").attr("x1",w/2).attr("x2",w/2).attr("y1",28).attr("y2",h-(compact?58:30)).attr("stroke",C.rule).attr("stroke-dasharray","3 4");
     function col(arr,x0,color,side){
       arr.forEach(function(d,i){
         var y=34+i*rowh;
@@ -1828,10 +1869,12 @@ function wireSeg(segId, cb){
           .attr("fill", side==="L"?"#eef3f8":"#e7eef1")
           .attr("stroke", color).attr("stroke-width",1).attr("opacity",0)
           .transition().delay(i*70 + (side==="L"?0:120)).duration(300).attr("opacity",1);
-        wrappedText(g, d.t, x0+14, y+20, Math.floor((colW-28)/7.2), 14,
+        var titleMax = Math.floor((colW-28)/7.2);
+        var titleLines = wrapLines(d.t, titleMax).length;
+        wrappedText(g, d.t, x0+14, y+(compact?26:20), titleMax, compact?16:14,
           {"fill":C.ink,"font-size":compact?12:13,"font-weight":700});
         // wrap note
-        wrappedText(g, d.n, x0+14, y+39, Math.floor((colW-28)/6.0), 13,
+        wrappedText(g, d.n, x0+14, y+(compact ? 34 + titleLines*16 : 39), Math.floor((colW-28)/6.0), compact?15:13,
           {"fill":C.soft,"font-size":11});
       });
     }
@@ -1842,7 +1885,7 @@ function wireSeg(segId, cb){
       {"text-anchor":"middle","fill":C.faint,"font-size":11});
   }
   draw();
-  window.addEventListener("resize", debounce(draw,200));
+  onWidthResize(holder, draw, 200);
 })();
 
 /* ============================================================
@@ -1905,7 +1948,7 @@ function wireSeg(segId, cb){
   }
   input.addEventListener("input", function(){ dom=(+input.value)/100; update(); });
   setup();
-  window.addEventListener("resize", debounce(setup,200));
+  onWidthResize(holder, setup, 200);
 })();
 
 /* ============================================================
@@ -1973,7 +2016,7 @@ function wireSeg(segId, cb){
   }
   inp.addEventListener("input", function(){ hard=(+inp.value)/100; draw(); });
   draw();
-  window.addEventListener("resize", debounce(draw,200));
+  onWidthResize(holder, draw, 200);
 })();
 
 /* ============================================================
@@ -2026,7 +2069,7 @@ function wireSeg(segId, cb){
     svg.on("click",function(){ shown = shown>=layers.length ? 1 : shown+1; draw(); });
   }
   draw();
-  window.addEventListener("resize", debounce(draw,200));
+  onWidthResize(holder, draw, 200);
 })();
 
 /* ============================================================
@@ -2068,7 +2111,7 @@ function wireSeg(segId, cb){
   }
   wireSeg("culturesSeg", function(m){ mode=m; draw(); });
   draw();
-  window.addEventListener("resize", debounce(draw,200));
+  onWidthResize(host, draw, 200);
 })();
 
 /* ============================================================
@@ -2128,7 +2171,7 @@ function wireSeg(segId, cb){
     }
   }
   draw();
-  window.addEventListener("resize", debounce(draw,200));
+  onWidthResize(host, draw, 200);
 })();
 
 /* ============================================================
@@ -2177,10 +2220,19 @@ function wireSeg(segId, cb){
   }
   wireSeg("magSeg", function(m){ mode=m; draw(); });
   draw();
-  window.addEventListener("resize", debounce(draw,200));
+  onWidthResize(host, draw, 200);
 })();
 
 /* utility */
+function onWidthResize(el, fn, ms){
+  var last = el ? el.clientWidth : window.innerWidth;
+  window.addEventListener("resize", debounce(function(){
+    var next = el ? el.clientWidth : window.innerWidth;
+    if(Math.abs(next-last) < 2) return;
+    last = next;
+    fn();
+  }, ms));
+}
 function debounce(fn,ms){ var t; return function(){ clearTimeout(t); t=setTimeout(fn,ms); }; }
 })();
 </script>
