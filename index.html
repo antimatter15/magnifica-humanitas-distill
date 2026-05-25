@@ -1469,6 +1469,31 @@ var SERIF = '"Source Serif 4",Georgia,serif';
 
 /* small helper: responsive width of a container */
 function W(el, max){ var w = el.clientWidth || 640; return Math.min(w, max||9999); }
+function wrapLines(text, maxc){
+  var words = text.split(/\s+/), lines = [], line = "";
+  maxc = Math.max(6, maxc || 30);
+  words.forEach(function(wd){
+    var next = line ? line + " " + wd : wd;
+    if(next.length > maxc && line){ lines.push(line); line = wd; }
+    else line = next;
+  });
+  if(line) lines.push(line);
+  return lines;
+}
+function fillWrappedText(t, text, x, maxc, lineH){
+  var lines = wrapLines(text, maxc);
+  t.selectAll("*").remove();
+  lines.forEach(function(ln, i){
+    t.append("tspan").attr("x", x).attr("dy", i ? lineH : 0).text(ln);
+  });
+  return lines.length;
+}
+function wrappedText(parent, text, x, y, maxc, lineH, attrs){
+  var t = parent.append("text").attr("x", x).attr("y", y);
+  Object.keys(attrs || {}).forEach(function(k){ t.attr(k, attrs[k]); });
+  fillWrappedText(t, text, x, maxc, lineH);
+  return t;
+}
 
 /* segmented control wiring */
 function wireSeg(segId, cb){
@@ -1492,19 +1517,22 @@ function wireSeg(segId, cb){
   var mode = "babel";
   function draw(){
     host.innerHTML="";
-    var w = W(host, 760), h = 360;
+    var w = W(host, 760);
+    var h = mode==="babel" ? (w < 430 ? 410 : 360) : (w < 430 ? 270 : 320);
     var svg = d3.select(host).append("svg")
       .attr("width","100%").attr("viewBox","0 0 "+w+" "+h)
       .attr("font-family",SANS);
     var cx = w/2;
+    var labelY = w < 430 ? h - 54 : h - 26, labelMax = Math.floor((w - 34) / 6.4);
     if(mode==="babel"){
       // a single tapering tower, uniform bricks, reaching up — top dissolving
       var levels = 9, baseW = Math.min(220, w*0.42), topW = 46;
+      var baseY = w < 430 ? h - 115 : h - 78;
       var g = svg.append("g");
       for(var i=0;i<levels;i++){
         var t = i/(levels-1);
         var lw = baseW - (baseW-topW)*t;
-        var ly = h-40 - i*30;
+        var ly = baseY - i*30;
         var op = i>levels-3 ? 0.30 : 1;            // top dissolves
         var bricks = Math.max(3, Math.round(lw/26));
         for(var b=0;b<bricks;b++){
@@ -1524,39 +1552,38 @@ function wireSeg(segId, cb){
           .attr("text-anchor","middle").text(gl)
           .transition().delay(700+k*70).duration(400).attr("opacity",0.8);
       });
-      svg.append("text").attr("x",cx).attr("y",h-12).attr("text-anchor","middle")
-        .attr("fill",C.soft).attr("font-size",13)
-        .text("One language · one direction · self-affirmation — and the result is dispersion");
+      wrappedText(svg, "One language · one direction · self-affirmation — and the result is dispersion",
+        cx, labelY, labelMax, 15, {"text-anchor":"middle","fill":C.soft,"font-size":12});
     } else {
       // jerusalem: a low, broad wall of varied stones, many builders, gates open, all anchored to a common line
       var segs = 11, segW = Math.min(w*0.86, 640)/segs, x0 = cx - segW*segs/2;
+      var wallBaseY = h - 88;
       var palette = ["#cdbfa6","#bda77f","#d4c8b0","#b89a6a","#c9b896","#a98d5e"];
       for(var s=0;s<segs;s++){
         var rows = 3 + (s%2);
         for(var r=0;r<rows;r++){
           svg.append("rect")
             .attr("x", x0 + s*segW + 1)
-            .attr("y", h-60 - r*22)
+            .attr("y", wallBaseY - r*22)
             .attr("width", segW-2).attr("height", 20)
             .attr("fill", palette[(s+r)%palette.length])
             .attr("rx",2).attr("opacity",0)
             .transition().delay(s*55 + r*40).duration(320).attr("opacity",0.95);
         }
         // a small builder figure per segment
-        svg.append("circle").attr("cx", x0+s*segW+segW/2).attr("cy", h-60-((3+(s%2))*22)-14)
+        svg.append("circle").attr("cx", x0+s*segW+segW/2).attr("cy", wallBaseY-((3+(s%2))*22)-14)
           .attr("r",4).attr("fill",C.blue).attr("opacity",0)
           .transition().delay(500+s*55).duration(300).attr("opacity",0.85);
       }
       // open gate gap
-      svg.append("rect").attr("x", cx-14).attr("y", h-104).attr("width",28).attr("height",44)
+      svg.append("rect").attr("x", cx-14).attr("y", wallBaseY-44).attr("width",28).attr("height",44)
         .attr("fill",C.paper).attr("stroke",C.accent2).attr("stroke-width",1.5);
       // common foundation line — "their strength comes from the Lord"
-      svg.append("line").attr("x1",x0).attr("x2",x0+segW*segs).attr("y1",h-58).attr("y2",h-58)
+      svg.append("line").attr("x1",x0).attr("x2",x0+segW*segs).attr("y1",wallBaseY+2).attr("y2",wallBaseY+2)
         .attr("stroke",C.accent2).attr("stroke-width",2).attr("opacity",0)
         .transition().delay(300).duration(500).attr("opacity",1);
-      svg.append("text").attr("x",cx).attr("y",h-12).attr("text-anchor","middle")
-        .attr("fill",C.soft).attr("font-size",13)
-        .text("Each assigned a section · gates kept open · communion, not uniformity");
+      wrappedText(svg, "Each assigned a section · gates kept open · communion, not uniformity",
+        cx, labelY, labelMax, 15, {"text-anchor":"middle","fill":C.soft,"font-size":12});
     }
   }
   wireSeg("babelSeg", function(m){ mode=m; draw(); });
@@ -1589,8 +1616,9 @@ function wireSeg(segId, cb){
   function draw(){
     host.innerHTML="";
     var w = W(host, 860);
+    var compact = w < 520;
     var padL=18, padR=18, top=54, axisY=top, rowH=0;
-    var h = 150;
+    var h = compact ? 220 : 170;
     var svg = d3.select(host).append("svg").attr("width","100%")
       .attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
     var x = d3.scaleLinear().domain([1885,2031]).range([padL, w-padR]);
@@ -1605,11 +1633,11 @@ function wireSeg(segId, cb){
     var info = svg.append("g");
     function showInfo(d){
       info.selectAll("*").remove();
-      info.append("text").attr("x",padL).attr("y",h-30)
+      info.append("text").attr("x",padL).attr("y",compact ? h-86 : h-48)
         .attr("fill",C.accent).attr("font-size",12).attr("font-weight",700)
         .text(d.y + " · " + d.t + "  —  " + d.a);
       var words = d.n.split(" "), line="", ln=0, maxc = Math.floor((w-padL-padR)/6.4);
-      var txt = info.append("text").attr("x",padL).attr("y",h-12).attr("fill",C.soft).attr("font-size",12);
+      var txt = info.append("text").attr("x",padL).attr("y",compact ? h-66 : h-30).attr("fill",C.soft).attr("font-size",12);
       words.forEach(function(wd){
         if((line+wd).length>maxc){ txt.append("tspan").attr("x",padL).attr("dy",ln?14:0).text(line); line=wd+" "; ln++; }
         else line+=wd+" ";
@@ -1650,9 +1678,9 @@ function wireSeg(segId, cb){
   var sel=-1;
   function draw(){
     host.innerHTML="";
-    var w = W(host,720), h=400;
+    var w = W(host,720), compact=w < 520, h=compact ? 470 : 400;
     var svg=d3.select(host).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
-    var cx=w/2, cy=180, R=Math.min(w*0.30,150);
+    var cx=w/2, cy=compact ? 172 : 180, R=Math.min(w*(compact ? 0.28 : 0.30),150);
     // spokes + outer nodes
     var pos = nodes.map(function(d,i){
       var ang = -Math.PI/2 + i*(2*Math.PI/nodes.length);
@@ -1688,10 +1716,10 @@ function wireSeg(segId, cb){
     var dbox=svg.append("g");
     function detail(d){
       dbox.selectAll("*").remove();
-      dbox.append("text").attr("x",w/2).attr("y",h-58).attr("text-anchor","middle")
+      dbox.append("text").attr("x",w/2).attr("y",compact ? h-118 : h-58).attr("text-anchor","middle")
         .attr("fill",C.accent).attr("font-size",13).attr("font-weight",700).text(d.t);
       var words=d.n.split(" "), line="", ln=0, maxc=Math.floor(w/6.6);
-      var txt=dbox.append("text").attr("x",w/2).attr("y",h-40).attr("text-anchor","middle").attr("fill",C.soft).attr("font-size",12);
+      var txt=dbox.append("text").attr("x",w/2).attr("y",compact ? h-98 : h-40).attr("text-anchor","middle").attr("fill",C.soft).attr("font-size",12);
       words.forEach(function(wd){ if((line+wd).length>maxc){ txt.append("tspan").attr("x",w/2).attr("dy",ln?14:0).text(line); line=wd+" "; ln++;} else line+=wd+" "; });
       txt.append("tspan").attr("x",w/2).attr("dy",ln?14:0).text(line);
     }
@@ -1725,7 +1753,7 @@ function wireSeg(segId, cb){
   function draw(){
     host.innerHTML="";
     var rows = mode==="classic"?classic:digital;
-    var w=W(host,720), rowh=58, h=rows.length*rowh+30;
+    var w=W(host,720), compact=w < 520, rowh=compact ? 78 : 58, h=rows.length*rowh+(compact ? 92 : 30);
     var svg=d3.select(host).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
     rows.forEach(function(d,i){
       var y=15+i*rowh;
@@ -1740,8 +1768,8 @@ function wireSeg(segId, cb){
         .attr("opacity",0).transition().delay(i*70).duration(320).attr("opacity",1);
       g.append("text").attr("x",w/2).attr("y",y+18).attr("text-anchor","middle")
         .attr("fill", d.flag?"#fff":C.ink).attr("font-size",13).attr("font-weight",700).text(d.t);
-      g.append("text").attr("x",w/2).attr("y",y+34).attr("text-anchor","middle")
-        .attr("fill", d.flag?"rgba(255,255,255,.85)":C.soft).attr("font-size",11).text(d.s);
+      wrappedText(g, d.s, w/2, y+34, Math.floor((bw-20)/6.4), 12,
+        {"text-anchor":"middle","fill": d.flag?"rgba(255,255,255,.85)":C.soft,"font-size":11});
       // arrows
       if(i<rows.length-1){
         var ay=y+rowh-12;
@@ -1750,10 +1778,11 @@ function wireSeg(segId, cb){
           .attr("opacity",0).transition().delay(300+i*70).duration(250).attr("opacity",0.8);
       }
     });
-    svg.append("text").attr("x",w/2).attr("y",h-2).attr("text-anchor","middle").attr("fill",C.faint).attr("font-size",11)
-      .text(mode==="classic"
+      wrappedText(svg, mode==="classic"
         ? "Authority flows up from the person; higher levels support, never supplant (§68–70)"
-        : "§71: the “highest level” is no longer the State but private platforms — subsidiarity inverted");
+        : "§71: the “highest level” is no longer the State but private platforms — subsidiarity inverted",
+      w/2, h-(compact?44:14), Math.floor((w-28)/6.4), 13,
+      {"text-anchor":"middle","fill":C.faint,"font-size":11});
   }
   wireSeg("subsSeg", function(m){ mode=m; draw(); });
   draw();
@@ -1784,7 +1813,7 @@ function wireSeg(segId, cb){
   var holder=document.createElement("div"); host.appendChild(holder);
   function draw(){
     holder.innerHTML="";
-    var w=W(holder,760), colW=(w-24)/2, rowh=64, h=Math.max(imitate.length,cannot.length)*rowh+54;
+    var w=W(holder,760), compact=w < 520, colW=(w-24)/2, rowh=compact ? 88 : 64, h=Math.max(imitate.length,cannot.length)*rowh+(compact ? 74 : 58);
     var svg=d3.select(holder).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
     // headers
     svg.append("text").attr("x",colW/2).attr("y",18).attr("text-anchor","middle").attr("fill",C.blue).attr("font-size",12).attr("font-weight",800).attr("letter-spacing","0.08em").text("CAN IMITATE");
@@ -1799,18 +1828,18 @@ function wireSeg(segId, cb){
           .attr("fill", side==="L"?"#eef3f8":"#e7eef1")
           .attr("stroke", color).attr("stroke-width",1).attr("opacity",0)
           .transition().delay(i*70 + (side==="L"?0:120)).duration(300).attr("opacity",1);
-        g.append("text").attr("x",x0+14).attr("y",y+22).attr("fill",C.ink).attr("font-size",13).attr("font-weight",700).text(d.t);
+        wrappedText(g, d.t, x0+14, y+20, Math.floor((colW-28)/7.2), 14,
+          {"fill":C.ink,"font-size":compact?12:13,"font-weight":700});
         // wrap note
-        var words=d.n.split(" "), line="", ln=0, maxc=Math.floor((colW-28)/6.0);
-        var txt=g.append("text").attr("x",x0+14).attr("y",y+38).attr("fill",C.soft).attr("font-size",11);
-        words.forEach(function(wd){ if((line+wd).length>maxc){ txt.append("tspan").attr("x",x0+14).attr("dy",ln?13:0).text(line); line=wd+" "; ln++;} else line+=wd+" "; });
-        txt.append("tspan").attr("x",x0+14).attr("dy",ln?13:0).text(line);
+        wrappedText(g, d.n, x0+14, y+39, Math.floor((colW-28)/6.0), 13,
+          {"fill":C.soft,"font-size":11});
       });
     }
     col(imitate,0,C.blue,"L");
     col(cannot,w-colW,C.accent,"R");
-    svg.append("text").attr("x",w/2).attr("y",h-8).attr("text-anchor","middle").attr("fill",C.faint).attr("font-size",11)
-      .text("“They may imitate… but they do not understand what they produce.” (§99)");
+    wrappedText(svg, "“They may imitate… but they do not understand what they produce.” (§99)",
+      w/2, h-(compact ? 24 : 8), Math.floor((w-24)/6.4), 13,
+      {"text-anchor":"middle","fill":C.faint,"font-size":11});
   }
   draw();
   window.addEventListener("resize", debounce(draw,200));
@@ -1855,7 +1884,7 @@ function wireSeg(segId, cb){
       lines.forEach(function(ln,k){ tt.append("tspan").attr("x",lx).attr("dy",k?12:(lines.length>1?-4:0)).text(ln); });
     }
     poly=svg.append("polygon").attr("fill","rgba(31,98,132,.14)").attr("stroke",C.accent).attr("stroke-width",2);
-    note=svg.append("text").attr("x",cx).attr("y",h-6).attr("text-anchor","middle").attr("font-size",11).attr("fill",C.faint);
+    note=svg.append("text").attr("x",cx).attr("y",h-20).attr("text-anchor","middle").attr("font-size",11).attr("fill",C.faint);
     update();
   }
   var poly, note;
@@ -1867,9 +1896,10 @@ function wireSeg(segId, cb){
     var pts=[];
     for(var i=0;i<n;i++){ var a=-Math.PI/2+i*2*Math.PI/n; pts.push([cx+Math.cos(a)*R*vals[i], cy+Math.sin(a)*R*vals[i]]); }
     poly.attr("points",pts.map(function(p){return p.join(",");}).join(" "));
-    note.text(dom<0.34? "A whole life: the faculties in proportion."
+    var noteText = dom<0.34? "A whole life: the faculties in proportion."
       : dom<0.7? "Intelligence stretches; the other dimensions begin to contract."
-      : "Absolutized, one faculty overshadows affection, will, commitment, relationship, care (§113).");
+      : "Absolutized, one faculty overshadows affection, will, commitment, relationship, care (§113).";
+    fillWrappedText(note, noteText, cx, Math.floor((w-24)/6.5), 13);
     poly.attr("fill", dom>0.7?"rgba(31,98,132,.20)":"rgba(84,128,150,.14)")
         .attr("stroke", dom>0.7?C.accent:C.accent2);
   }
@@ -1901,10 +1931,10 @@ function wireSeg(segId, cb){
   function shade(i){ return d3.interpolateRgb("#cfe0e8", C.accent)(i/3); }
   function draw(){
     holder.innerHTML="";
-    var w=W(holder,720), h=340;
+    var w=W(holder,720), compact=w < 520, h=compact ? 500 : 340;
     var svg=d3.select(holder).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
-    var R=Math.min(h*0.42, w*0.30, 130);
-    var cx=R+18, cy=h/2;
+    var R=compact ? Math.min(w*0.27, 92) : Math.min(h*0.42, w*0.30, 130);
+    var cx=compact ? w/2 : R+18, cy=compact ? 128 : h/2;
     var coreR=R*0.34;
     // radii outer->inner
     var rad=[R, R*0.80, R*0.58, coreR];
@@ -1922,21 +1952,21 @@ function wireSeg(segId, cb){
     svg.append("text").attr("x",cx).attr("y",cy+5).attr("text-anchor","middle").attr("fill","#fff")
       .attr("font-size",18).attr("font-weight",700).text("\u221e");
     // legend
-    var lx=cx+R+34, ly=cy-R+6;
-    if(lx>w-150){ lx=cx+R+18; }
+    var lx=compact ? 18 : cx+R+34, ly=compact ? 255 : cy-R+6;
+    if(!compact && lx>w-150){ lx=cx+R+18; }
+    var rowGap=compact ? 58 : (R*2-12)/4;
     layers.forEach(function(d,i){
-      var yy=ly+i*((R*2-12)/4)+10;
+      var yy=ly+i*rowGap+10;
       var g=svg.append("g").style("cursor","pointer")
         .on("mouseenter",function(){ hostHL=i; draw(); }).on("mouseleave",function(){ hostHL=-1; draw(); });
       g.append("rect").attr("x",lx).attr("y",yy-11).attr("width",14).attr("height",14).attr("rx",2)
         .attr("fill", i<3?shade(i):C.accent);
-      g.append("text").attr("x",lx+22).attr("y",yy).attr("fill",C.ink).attr("font-size",13).attr("font-weight",700)
-        .text(d.t + (d.vary?"":"  \u00b7 inviolable"));
+      var title = d.t + (d.vary?"":"  \u00b7 inviolable");
+      wrappedText(g, title, lx+22, yy, Math.floor((w-lx-34)/7.2), 13,
+        {"fill":C.ink,"font-size":13,"font-weight":700});
       // wrap descriptor
-      var words=d.n.split(" "), line="", ln=0, maxc=Math.floor((w-lx-30)/6.0);
-      var txt=g.append("text").attr("x",lx+22).attr("y",yy+15).attr("fill",C.soft).attr("font-size",11.5);
-      words.forEach(function(wd){ if((line+wd).length>maxc){ txt.append("tspan").attr("x",lx+22).attr("dy",ln?13:0).text(line); line=wd+" "; ln++;} else line+=wd+" "; });
-      txt.append("tspan").attr("x",lx+22).attr("dy",ln?13:0).text(line);
+      wrappedText(g, d.n, lx+22, yy+16, Math.floor((w-lx-34)/6.1), 13,
+        {"fill":C.soft,"font-size":11.5});
     });
     svg.append("text").attr("x",cx).attr("y",h-4).attr("text-anchor","middle").attr("fill",C.faint).attr("font-size",11)
       .text(hard<0.05? "At rest: all four in full." : "The outer three contract \u2014 the core does not move.");
@@ -1964,7 +1994,7 @@ function wireSeg(segId, cb){
   function tfg(t){ return t>=2?"#fff":C.ink; }
   function draw(){
     holder.innerHTML="";
-    var w=W(holder,720), rh=70, gap=10, top=8, h=top+layers.length*(rh+gap)+24;
+    var w=W(holder,720), compact=w < 520, rh=compact ? 84 : 70, gap=10, top=8, h=top+layers.length*(rh+gap)+24;
     var svg=d3.select(holder).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h)
       .attr("font-family",SANS).style("cursor","pointer");
     layers.forEach(function(d,i){
@@ -1979,11 +2009,10 @@ function wireSeg(segId, cb){
         .attr("opacity", on?1:1)
         .style("opacity",0).transition().delay(on?i*40:0).duration(260).style("opacity", on?1:0.5);
       if(on){
-        g.append("text").attr("x",x+16).attr("y",y+27).attr("fill",tfg(d.tone)).attr("font-size",14).attr("font-weight",700).text(d.t);
-        var words=d.n.split(" "), line="", ln=0, maxc=Math.floor((bw-30)/6.6);
-        var txt=g.append("text").attr("x",x+16).attr("y",y+45).attr("fill", d.tone>=2?"rgba(255,255,255,.85)":C.soft).attr("font-size",11.5);
-        words.forEach(function(wd){ if((line+wd).length>maxc){ txt.append("tspan").attr("x",x+16).attr("dy",ln?13:0).text(line); line=wd+" "; ln++;} else line+=wd+" "; });
-        txt.append("tspan").attr("x",x+16).attr("dy",ln?13:0).text(line);
+        wrappedText(g, d.t, x+16, y+25, Math.floor((bw-30)/7.2), 14,
+          {"fill":tfg(d.tone),"font-size":compact?13:14,"font-weight":700});
+        wrappedText(g, d.n, x+16, y+(compact?53:45), Math.floor((bw-30)/6.6), 13,
+          {"fill": d.tone>=2?"rgba(255,255,255,.85)":C.soft,"font-size":11.5});
       } else {
         g.append("text").attr("x",w/2).attr("y",y+rh/2+4).attr("text-anchor","middle").attr("fill",C.faint).attr("font-size",12).text("\u2014 hidden \u2014");
       }
@@ -2016,25 +2045,23 @@ function wireSeg(segId, cb){
   var mode="power";
   function draw(){
     host.querySelectorAll("svg").forEach(function(s){ s.remove(); });
-    var w=W(host,720), rh=58, top=6, h=top+rows.length*rh+22;
+    var w=W(host,720), compact=w < 520, rh=compact ? 70 : 58, top=6, h=top+rows.length*rh+22;
     var svg=d3.select(host).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
     var col=mode==="power"?C.accent2:C.accent;
-    var labW=Math.min(170, w*0.30);
+    var labW=compact ? Math.min(92, w*0.32) : Math.min(170, w*0.30);
     rows.forEach(function(d,i){
       var y=top+i*rh;
-      svg.append("text").attr("x",0).attr("y",y+rh/2+4).attr("fill",C.faint).attr("font-size",11.5)
+      svg.append("text").attr("x",0).attr("y",y+rh/2+4).attr("fill",C.faint).attr("font-size",compact?9.5:11.5)
         .attr("font-weight",600).attr("letter-spacing",".02em").text(d.dim.toUpperCase());
       var g=svg.append("g");
       g.append("rect").attr("x",labW).attr("y",y+8).attr("width",w-labW).attr("height",rh-16).attr("rx",4)
         .attr("fill", mode==="power"?"#eef1f3":"#e9f0f3").attr("stroke",col).attr("stroke-width",1);
       g.append("rect").attr("x",labW).attr("y",y+8).attr("width",4).attr("height",rh-16).attr("fill",col);
       var val = d[mode];
-      var t=g.append("text").attr("x",labW+16).attr("y",y+rh/2+4).attr("fill",C.ink).attr("font-size",13.5).attr("font-weight",500)
-        .style("opacity",0).text(val);
+      var t=wrappedText(g, val, labW+16, y+24, Math.floor((w-labW-28)/6.5), 14,
+        {"fill":C.ink,"font-size":compact?12:13.5,"font-weight":500})
+        .style("opacity",0);
       t.transition().duration(260).style("opacity",1);
-      if((labW+16+val.length*7) > w-10){
-        t.attr("font-size",12);
-      }
     });
     svg.append("text").attr("x",w).attr("y",h-4).attr("text-anchor","end").attr("fill",col).attr("font-size",11).attr("font-weight",700)
       .text(mode==="power"?"\u2191 the modern Babel":"\u2191 the rebuilding of Jerusalem");
@@ -2064,23 +2091,26 @@ function wireSeg(segId, cb){
   function draw(){
     host.querySelectorAll("svg").forEach(function(s){ s.remove(); });
     var w=W(host,720);
-    var cardH=64, gap=10, n=3, cw=(w-gap*(n-1))/n;
-    var topY=44, midY=topY+cardH+34, botY=midY+22, h=botY+cardH+62;
+    var compact=w < 520;
+    var cardH=compact ? 50 : 64, gap=compact ? 8 : 10, n=3, cw=compact ? w : (w-gap*(n-1))/n;
+    var rowBlock=compact ? n*cardH+(n-1)*gap : cardH;
+    var topY=compact ? 56 : 44;
+    var midY=topY+rowBlock+(compact ? 32 : 34);
+    var botY=midY+(compact ? 24 : 22), h=botY+rowBlock+64;
     var svg=d3.select(host).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
-    svg.append("text").attr("x",0).attr("y",16).attr("fill",C.ink).attr("font-size",13).attr("font-weight",700)
-      .text("Lethal or irreversible decisions \u2014 not delegable to machines.");
+    wrappedText(svg, "Lethal or irreversible decisions \u2014 not delegable to machines.",
+      0, 16, Math.floor(w/7.0), 15, {"fill":C.ink,"font-size":13,"font-weight":700});
     function row(arr,y,color,tag){
       svg.append("text").attr("x",0).attr("y",y-8).attr("fill",color).attr("font-size",11).attr("font-weight",700)
         .attr("letter-spacing",".1em").text(tag);
       arr.forEach(function(d,i){
-        var x=i*(cw+gap);
+        var x=compact ? 0 : i*(cw+gap);
+        var yy=compact ? y+i*(cardH+gap) : y;
         var g=svg.append("g").style("cursor","pointer");
-        g.append("rect").attr("x",x).attr("y",y).attr("width",cw).attr("height",cardH).attr("rx",4)
+        g.append("rect").attr("x",x).attr("y",yy).attr("width",cw).attr("height",cardH).attr("rx",4)
           .attr("fill", sel===d?color:"#fff").attr("stroke",color).attr("stroke-width", sel===d?0:1.4);
-        var words=d.t.split(" "), line="", ln=0, maxc=Math.floor((cw-20)/8.2);
-        var tx=g.append("text").attr("x",x+12).attr("y",y+24).attr("fill", sel===d?"#fff":C.ink).attr("font-size",13).attr("font-weight",700);
-        words.forEach(function(wd){ if((line+wd).length>maxc){ tx.append("tspan").attr("x",x+12).attr("dy",ln?15:0).text(line); line=wd+" "; ln++;} else line+=wd+" "; });
-        tx.append("tspan").attr("x",x+12).attr("dy",ln?15:0).text(line);
+        wrappedText(g, d.t, x+12, yy+20, Math.floor((cw-24)/7.0), 15,
+          {"fill": sel===d?"#fff":C.ink,"font-size":13,"font-weight":700});
         g.on("click",function(){ sel = sel===d?null:d; draw(); });
       });
     }
@@ -2089,13 +2119,12 @@ function wireSeg(segId, cb){
     svg.append("text").attr("x",w/2).attr("y",midY-6).attr("text-anchor","middle").attr("fill",C.faint).attr("font-size",12).text("\u2193 which require \u2193");
     row(nonneg, botY, C.accent2, "THREE NON-NEGOTIABLES (\u00a7200)");
     var dy=botY+cardH+22;
+    if(compact) dy=botY+rowBlock+22;
     if(sel){
-      var words=sel.n.split(" "), line="", ln=0, maxc=Math.floor(w/6.6);
-      var txt=svg.append("text").attr("x",0).attr("y",dy).attr("fill",C.soft).attr("font-size",12.5);
-      words.forEach(function(wd){ if((line+wd).length>maxc){ txt.append("tspan").attr("x",0).attr("dy",ln?15:0).text(line); line=wd+" "; ln++;} else line+=wd+" "; });
-      txt.append("tspan").attr("x",0).attr("dy",ln?15:0).text(line);
+      wrappedText(svg, sel.n, 0, dy, Math.floor(w/6.6), 15, {"fill":C.soft,"font-size":12.5});
     } else {
-      svg.append("text").attr("x",0).attr("y",dy).attr("fill",C.faint).attr("font-size",12).text("Tap any card to read what it guards against.");
+      wrappedText(svg, "Tap any card to read what it guards against.",
+        0, dy, Math.floor(w/6.6), 15, {"fill":C.faint,"font-size":12});
     }
   }
   draw();
