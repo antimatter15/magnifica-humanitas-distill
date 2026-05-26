@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,600&family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 :root{
   /* Distill palette: grayscale text/chrome + signature teal header bar */
@@ -224,11 +225,17 @@ button.toggle:hover,.seg button:hover{border-color:var(--ink);}
 .seg button:last-child{border-right:none;}
 .seg button.on{background:var(--ink); color:#fff;}
 .hint{font-family:var(--sans); font-size:12px; color:var(--faint); letter-spacing:.02em;}
+.poly-body{padding:0;}
+.poly-viz{height:360px; width:100%; touch-action:none; cursor:grab;}
+.poly-viz:active{cursor:grabbing;}
+.poly-viz canvas{display:block; width:100%; height:100%;}
 @media(max-width:640px){
   .fig-head{padding:24px 24px 8px;}
   .fig-body{padding:14px 24px 34px;}
   .fig-cap{margin-top:26px; padding:0 24px 22px;}
   .ui-row{padding:8px 24px 20px;}
+  .poly-body{padding:0;}
+  .poly-viz{height:330px;}
 }
 
 /* ---------- endnotes ---------- */
@@ -296,7 +303,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
     <div class="editor">Editor's framing</div>
     <p>Humanity stands before a choice the encyclical casts in two biblical images: to raise another <strong>Tower of Babel</strong> — grandiose, uniform, self-sufficient, reaching for heaven without God — or to take up the <strong>way of Nehemiah</strong>, rebuilding the walls of Jerusalem stone by stone through shared responsibility. Artificial intelligence is read not as one more topic but as a force that tests the categories of the Church's Social Doctrine from within.</p>
     <p>This reading edition is formatted in the style of <strong><a href="https://distill.pub/">Distill.pub</a></strong>, a scientific journal focused on clear, interactive, and intuitive explanations of machine learning concepts run by <strong><a href="https://colah.github.io/about.html">Christopher Olah</a></strong> from 2016 until he co-founded <strong>Anthropic</strong> in 2021. This is an homage, it is not an official Distill publication, nor an official Vatican publication; the source text is &copy; Libreria Editrice Vaticana. This edition is lightly curated by <strong><a href="https://x.com/antimatter15">Kevin Kwok</a></strong>, but principally driven by Claude Opus 4.7.</p>
-    <p>This edition preserves the full text and its 224 notes, and threads eleven interactive figures through the argument. Paragraph numbers run in the left margin; commentary runs in the right.</p>
+    <p>This edition preserves the full text and its 224 notes, and threads twelve interactive figures through the argument. Paragraph numbers run in the left margin; commentary runs in the right.</p>
   </div>
 
   <nav class="toc">
@@ -430,6 +437,17 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 
 <aside class="sidenote gold"><span class="sn-label">The polyhedron</span>A recurring Franciscan image: not a sphere (where every point is equidistant and identical) but a polyhedron — unity that <em>keeps</em> the distinct faces. The encyclical sets it against the homogenizing "single language" of Babel.</aside>
 
+<figure class="figure" id="fig-polyhedron">
+  <div class="fig-frame">
+    <div class="fig-head">
+      <div class="fig-num">Figure 3 · Interactive</div>
+      <div class="fig-title">A unity of many faces</div>
+    </div>
+    <div class="fig-body poly-body"><div id="polyViz" class="poly-viz" aria-label="Slowly rotating multifaceted polyhedron"></div></div>
+  </div>
+  <div class="fig-cap"><b>The polyhedron, turned slowly.</b> Unlike a sphere, it does not erase difference in order to make a whole. Its faces remain distinct while belonging to one form: a visual analogue for truth shared from many angles, and for catholicity as communion rather than uniformity.</div>
+</figure>
+
 <p class="par"><span class="pnum">26</span>This attitude of openness to truth, which is at the same time both one and diverse, profoundly expresses the catholicity of the Church. The Second Vatican Council reminds us that, in virtue of this very catholicity, "each part contributes its own gifts to other parts and to the entire Church."<span class="fn" data-fn="20">20</span> From this perspective, Saint Paul VI acknowledged that, given the great variety of historical situations, it is unrealistic to think that the Church's Social Doctrine can propose a single response that is valid in all contexts.<span class="fn" data-fn="21">21</span> The fruitful tension between the universality of the Church's mission and her local roots is an intrinsic aspect of her life.</p>
 
 <p class="par"><span class="pnum">27</span>In light of what has been said so far, the Church's Social Doctrine can be seen more authentically. It is not a handbook of principles and norms to be applied, but a process of shared discernment. It is born from the encounter between the eternal truth of the Gospel and the questions of history. Therefore, when the dignity of our brothers and sisters is violated, when politics fails to address the tragedies of humanity, when the economy turns against the person or science oversteps the limits of its competence,<span class="fn" data-fn="22">22</span> the Church — together with other Christian denominations and believers of other religions — must make her voice heard, not in order to dominate, but to promote communion. Understood in this way, Social Doctrine becomes a theology of communion in history.</p>
@@ -512,7 +530,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 <figure class="figure" id="fig-dignity">
   <div class="fig-frame">
     <div class="fig-head">
-      <div class="fig-num">Figure 3 · Interactive</div>
+      <div class="fig-num">Figure 4 · Interactive</div>
       <div class="fig-title">Four senses of dignity — and the one that cannot be touched</div>
     </div>
     <div class="fig-body"><div id="dignityViz"></div></div>
@@ -538,7 +556,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 <figure class="figure" id="fig-principles">
   <div class="fig-frame">
     <div class="fig-head">
-      <div class="fig-num">Figure 4 · Interactive</div>
+      <div class="fig-num">Figure 5 · Interactive</div>
       <div class="fig-title">The five principles, held together by dignity</div>
     </div>
     <div class="ui-row">
@@ -583,7 +601,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 <figure class="figure" id="fig-subsidiarity">
   <div class="fig-frame">
     <div class="fig-head">
-      <div class="fig-num">Figure 5 · Interactive</div>
+      <div class="fig-num">Figure 6 · Interactive</div>
       <div class="fig-title">What sits at the top? Subsidiarity, inverted</div>
     </div>
     <div class="ui-row">
@@ -681,7 +699,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 <figure class="figure" id="fig-ai">
   <div class="fig-frame">
     <div class="fig-head">
-      <div class="fig-num">Figure 6 · Interactive</div>
+      <div class="fig-num">Figure 7 · Interactive</div>
       <div class="fig-title">What AI imitates — and what it cannot be</div>
     </div>
     <div class="ui-row">
@@ -728,7 +746,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 <figure class="figure" id="fig-imbalance">
   <div class="fig-frame">
     <div class="fig-head">
-      <div class="fig-num">Figure 7 · Interactive</div>
+      <div class="fig-num">Figure 8 · Interactive</div>
       <div class="fig-title">When one faculty claims to be the measure of everything</div>
     </div>
     <div class="ui-row">
@@ -905,7 +923,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 <figure class="figure" id="fig-chain">
   <div class="fig-frame">
     <div class="fig-head">
-      <div class="fig-num">Figure 8 · Interactive</div>
+      <div class="fig-num">Figure 9 · Interactive</div>
       <div class="fig-title">"Nothing in AI is immaterial" — the chain beneath a flawless answer</div>
     </div>
     <div class="ui-row">
@@ -963,7 +981,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 <figure class="figure" id="fig-cultures">
   <div class="fig-frame">
     <div class="fig-head">
-      <div class="fig-num">Figure 9 · Interactive</div>
+      <div class="fig-num">Figure 10 · Interactive</div>
       <div class="fig-title">Two cultures: of power, and of love</div>
     </div>
     <div class="ui-row">
@@ -1016,7 +1034,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 <figure class="figure" id="fig-war">
   <div class="fig-frame">
     <div class="fig-head">
-      <div class="fig-num">Figure 10 · Interactive</div>
+      <div class="fig-num">Figure 11 · Interactive</div>
       <div class="fig-title">Lethal autonomy: what discernment requires</div>
     </div>
     <div class="ui-row">
@@ -1154,7 +1172,7 @@ hr.div{border:none; border-top:1px solid var(--rule); max-width:var(--col); marg
 <figure class="figure" id="fig-mag">
   <div class="fig-frame">
     <div class="fig-head">
-      <div class="fig-num">Figure 11 · Interactive</div>
+      <div class="fig-num">Figure 12 · Interactive</div>
       <div class="fig-title">The Magnificat reversal</div>
     </div>
     <div class="ui-row">
@@ -1631,7 +1649,189 @@ function wireSeg(segId, cb){
 })();
 
 /* ============================================================
-   3. FIGURE 2 — TIMELINE OF SOCIAL TEACHING 1891 → 2026
+   3. FIGURE 3 — ROTATING POLYHEDRON
+   ============================================================ */
+(function polyhedron(){
+  var host=document.getElementById("polyViz");
+  if(!host) return;
+  if(!window.THREE){
+    host.innerHTML='<div class="hint" style="padding:24px">The 3D polyhedron could not load.</div>';
+    return;
+  }
+  var renderer, scene, camera, group, frame=null, running=false, ready=false;
+  var dragging=false, lastX=0, lastY=0;
+
+  function init(){
+    if(ready) return;
+    ready=true;
+    scene=new THREE.Scene();
+    camera=new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+    camera.position.set(0, 0.12, 5.4);
+
+    renderer=new THREE.WebGLRenderer({antialias:true, alpha:true});
+    renderer.setClearColor(0xffffff, 0);
+    host.appendChild(renderer.domElement);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.54));
+    var key=new THREE.DirectionalLight(0xffffff, 0.74);
+    key.position.set(3, 4, 5);
+    scene.add(key);
+    var rim=new THREE.DirectionalLight(0xd9c4a4, 0.36);
+    rim.position.set(-4, -2, 3);
+    scene.add(rim);
+
+    group=new THREE.Group();
+    var vertices=rhombicuboctahedronVertices();
+    var edges=rhombicuboctahedronEdges(vertices);
+    var strutMaterial=new THREE.MeshPhongMaterial({
+      color:0xb99f72,
+      shininess:28,
+      flatShading:true
+    });
+    var shadowMaterial=new THREE.MeshBasicMaterial({
+      color:0x16191b,
+      transparent:true,
+      opacity:0.76
+    });
+    var nodeMaterial=new THREE.MeshPhongMaterial({
+      color:0xd7c39d,
+      shininess:24
+    });
+    edges.forEach(function(edge){
+      group.add(strut(edge[0], edge[1], 0.052, strutMaterial, 8));
+      group.add(strut(edge[0], edge[1], 0.014, shadowMaterial, 5));
+    });
+    vertices.forEach(function(v){
+      var node=new THREE.Mesh(new THREE.SphereGeometry(0.072, 10, 8), nodeMaterial);
+      node.position.copy(v);
+      group.add(node);
+    });
+
+    group.rotation.set(-0.46, 0.64, 0.10);
+    scene.add(group);
+
+    host.addEventListener("pointerdown", function(ev){
+      dragging=true; lastX=ev.clientX; lastY=ev.clientY;
+      host.setPointerCapture(ev.pointerId);
+    });
+    host.addEventListener("pointermove", function(ev){
+      if(!dragging) return;
+      var dx=ev.clientX-lastX, dy=ev.clientY-lastY;
+      lastX=ev.clientX; lastY=ev.clientY;
+      group.rotation.y += dx*0.009;
+      group.rotation.x += dy*0.007;
+    });
+    host.addEventListener("pointerup", function(ev){
+      dragging=false;
+      try{ host.releasePointerCapture(ev.pointerId); }catch(e){}
+    });
+    host.addEventListener("pointercancel", function(){ dragging=false; });
+
+    resize();
+    render();
+  }
+
+  function resize(){
+    if(!renderer) return;
+    var w=host.clientWidth || 640, h=host.clientHeight || 360;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h, false);
+    camera.aspect=w/h;
+    camera.updateProjectionMatrix();
+    render();
+  }
+
+  function render(){
+    if(renderer && scene && camera) renderer.render(scene, camera);
+  }
+
+  function rhombicuboctahedronVertices(){
+    var a=1+Math.sqrt(2), vals=[1,1,a], verts=[], seen={};
+    function permute(arr){
+      return [[arr[0],arr[1],arr[2]],[arr[0],arr[2],arr[1]],[arr[1],arr[0],arr[2]],
+        [arr[1],arr[2],arr[0]],[arr[2],arr[0],arr[1]],[arr[2],arr[1],arr[0]]];
+    }
+    [-1,1].forEach(function(sx){
+      [-1,1].forEach(function(sy){
+        [-1,1].forEach(function(sz){
+          permute([sx*vals[0], sy*vals[1], sz*vals[2]]).forEach(function(p){
+            var key=p.map(function(n){ return n.toFixed(5); }).join(",");
+            if(!seen[key]){
+              seen[key]=true;
+              verts.push(new THREE.Vector3(p[0],p[1],p[2]).multiplyScalar(0.58));
+            }
+          });
+        });
+      });
+    });
+    return verts;
+  }
+
+  function rhombicuboctahedronEdges(vertices){
+    var edges=[], target=2*0.58, eps=0.025;
+    for(var i=0;i<vertices.length;i++){
+      for(var j=i+1;j<vertices.length;j++){
+        if(Math.abs(vertices[i].distanceTo(vertices[j])-target)<eps){
+          edges.push([vertices[i], vertices[j]]);
+        }
+      }
+    }
+    return edges;
+  }
+
+  function strut(a,b,r,mat,segments){
+    var mid=new THREE.Vector3().addVectors(a,b).multiplyScalar(0.5);
+    var dir=new THREE.Vector3().subVectors(b,a);
+    var len=dir.length();
+    var geom=new THREE.CylinderGeometry(r, r, len, segments || 8);
+    var mesh=new THREE.Mesh(geom, mat);
+    mesh.position.copy(mid);
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize());
+    return mesh;
+  }
+
+  function tick(){
+    if(!running) return;
+    frame=requestAnimationFrame(tick);
+    if(!dragging){
+      group.rotation.y += 0.0042;
+      group.rotation.x += 0.0008;
+    }
+    render();
+  }
+
+  function start(){
+    init();
+    if(running) return;
+    running=true;
+    tick();
+  }
+
+  function stop(){
+    running=false;
+    if(frame) cancelAnimationFrame(frame);
+    frame=null;
+  }
+
+  if("IntersectionObserver" in window){
+    var obs=new IntersectionObserver(function(entries){
+      if(entries.some(function(entry){ return entry.isIntersecting; })){
+        start();
+        obs.disconnect();
+      }
+    }, {threshold:0.08});
+    obs.observe(host);
+  } else {
+    start();
+  }
+  onWidthResize(host, resize, 120);
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden) stop();
+  });
+})();
+
+/* ============================================================
+   4. FIGURE 2 — TIMELINE OF SOCIAL TEACHING 1891 → 2026
    ============================================================ */
 (function timeline(){
   var host = document.getElementById("timelineViz");
@@ -1792,7 +1992,7 @@ function wireSeg(segId, cb){
   function draw(){
     host.innerHTML="";
     var rows = mode==="classic"?classic:digital;
-    var w=W(host,720), compact=w < 520, rowh=compact ? 108 : 58, h=rows.length*rowh+(compact ? 104 : 30);
+    var w=W(host,720), compact=w < 520, rowh=compact ? 108 : 82, h=rows.length*rowh+(compact ? 104 : 54);
     var svg=d3.select(host).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
     rows.forEach(function(d,i){
       var y=15+i*rowh;
@@ -1809,7 +2009,7 @@ function wireSeg(segId, cb){
       var titleLines = wrapLines(d.t, titleMax).length;
       wrappedText(g, d.t, w/2, y+(compact?24:18), titleMax, compact?16:14,
         {"text-anchor":"middle","fill": d.flag?"#fff":C.ink,"font-size":13,"font-weight":700});
-      wrappedText(g, d.s, w/2, y+(compact ? 28 + titleLines*16 : 34), Math.floor((bw-20)/6.4), compact?14:12,
+      wrappedText(g, d.s, w/2, y+(compact ? 28 + titleLines*16 : 38), Math.floor((bw-20)/6.4), compact?14:14,
         {"text-anchor":"middle","fill": d.flag?"rgba(255,255,255,.85)":C.soft,"font-size":11});
       // arrows
       if(i<rows.length-1){
@@ -1822,7 +2022,7 @@ function wireSeg(segId, cb){
       wrappedText(svg, mode==="classic"
         ? "Authority flows up from the person; higher levels support, never supplant (§68–70)"
         : "§71: the “highest level” is no longer the State but private platforms — subsidiarity inverted",
-      w/2, h-(compact?44:14), Math.floor((w-28)/6.4), 13,
+      w/2, h-(compact?44:34), Math.floor((w-28)/6.4), 13,
       {"text-anchor":"middle","fill":C.faint,"font-size":11});
   }
   wireSeg("subsSeg", function(m){ mode=m; draw(); });
@@ -1854,13 +2054,13 @@ function wireSeg(segId, cb){
   var holder=document.createElement("div"); host.appendChild(holder);
   function draw(){
     holder.innerHTML="";
-    var w=W(holder,760), compact=w < 520, colW=(w-24)/2, rowh=compact ? 140 : 64, h=Math.max(imitate.length,cannot.length)*rowh+(compact ? 92 : 58);
+    var w=W(holder,760), compact=w < 520, colW=(w-24)/2, rowh=compact ? 140 : 90, h=Math.max(imitate.length,cannot.length)*rowh+(compact ? 92 : 78);
     var svg=d3.select(holder).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
     // headers
     svg.append("text").attr("x",colW/2).attr("y",18).attr("text-anchor","middle").attr("fill",C.blue).attr("font-size",12).attr("font-weight",800).attr("letter-spacing","0.08em").text("CAN IMITATE");
     svg.append("text").attr("x",w-colW/2).attr("y",18).attr("text-anchor","middle").attr("fill",C.accent).attr("font-size",12).attr("font-weight",800).attr("letter-spacing","0.08em").text("CANNOT BE");
     // divider
-    svg.append("line").attr("x1",w/2).attr("x2",w/2).attr("y1",28).attr("y2",h-(compact?58:30)).attr("stroke",C.rule).attr("stroke-dasharray","3 4");
+    svg.append("line").attr("x1",w/2).attr("x2",w/2).attr("y1",28).attr("y2",h-(compact?58:48)).attr("stroke",C.rule).attr("stroke-dasharray","3 4");
     function col(arr,x0,color,side){
       arr.forEach(function(d,i){
         var y=34+i*rowh;
@@ -1874,7 +2074,7 @@ function wireSeg(segId, cb){
         wrappedText(g, d.t, x0+14, y+(compact?26:20), titleMax, compact?16:14,
           {"fill":C.ink,"font-size":compact?12:13,"font-weight":700});
         // wrap note
-        wrappedText(g, d.n, x0+14, y+(compact ? 34 + titleLines*16 : 39), Math.floor((colW-28)/6.0), compact?15:13,
+        wrappedText(g, d.n, x0+14, y+(compact ? 34 + titleLines*16 : 42), Math.floor((colW-28)/6.0), compact?15:14,
           {"fill":C.soft,"font-size":11});
       });
     }
