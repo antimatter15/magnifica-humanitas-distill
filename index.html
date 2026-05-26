@@ -2637,22 +2637,22 @@ function wireSeg(segId, cb){
   if(!host || !window.d3) return;
   var dims = [
     {
-      dim:"Origin of the goods",
+      dim:"Origin of goods",
       c:"\"God gave the earth to the whole human race\" (§65) — creation itself carries a communal title that precedes any private claim.",
       d:"The same origin is asserted for data, code and platforms: produced by human creativity nourished by a shared intellectual commons."
     },
     {
-      dim:"Scope of private ownership",
+      dim:"Private ownership",
       c:"Permitted, yet always qualified: \"not absolute or inviolable\" (§66); \"the social function is a doctrine of the Church.\"",
       d:"Patents, data ownership and platform monopolies are legitimate, yet subject to the same qualification — the social function holds (§67)."
     },
     {
-      dim:"When the limit is breached",
+      dim:"Limit breached",
       c:"When land concentrates such that the poor cannot access basic necessities; \"restore to the poor what belongs to them\" (§66).",
       d:"\"A new imbalance is created that contradicts the universal destination of goods, widening the digital divide\" (§67)."
     },
     {
-      dim:"What the principle demands",
+      dim:"What it demands",
       c:"Access to food, water, healthcare; redistribution; no private monopoly of essentials.",
       d:"\"Universal access to technologies and the education needed to use them\"; data treated as a common or shared good (§108–109)."
     }
@@ -2721,21 +2721,24 @@ function wireSeg(segId, cb){
   function draw(){
     holder.innerHTML = "";
     var w = W(holder, 720), compact = w < 500;
-    var nodeR = compact ? 26 : 32, seaH = compact ? 64 : 56, axY = compact ? 110 : 100;
+    var nodeR = compact ? 26 : 32, seaH = compact ? 60 : 72;
+    var seaY = 16, axY = seaY + seaH/2;
     var detH = sel ? (compact ? 130 : 110) : 28;
-    var h = axY + nodeR + detH + 20;
+    var dy = seaY + seaH + 30;
+    var h = dy + detH + 4;
     var svg = d3.select(holder).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
+    // axis end labels (above sea band)
+    var x0 = nodeR+6, x1 = w-nodeR-6;
+    svg.append("text").attr("x",x0).attr("y",12).attr("text-anchor","middle").attr("fill",C.faint).attr("font-size",9.5).text("human");
+    svg.append("text").attr("x",x1).attr("y",12).attr("text-anchor","middle").attr("fill",C.faint).attr("font-size",9.5).text("posthuman");
     // sea of assumptions
-    var seaY = axY - seaH/2;
     svg.append("rect").attr("x",0).attr("y",seaY).attr("width",w).attr("height",seaH).attr("fill","#edf2f5").attr("rx",4);
-    svg.append("text").attr("x",w/2).attr("y",seaY+seaH-6).attr("text-anchor","middle")
+    // axis line inside sea band
+    svg.append("line").attr("x1",x0).attr("x2",x1).attr("y1",axY).attr("y2",axY).attr("stroke",C.rule).attr("stroke-width",2);
+    // sea caption below band
+    svg.append("text").attr("x",w/2).attr("y",seaY+seaH+14).attr("text-anchor","middle")
       .attr("fill",C.faint).attr("font-size",9.5).attr("font-style","italic")
       .text("common sea: technology as the primary lens \u2014 the aspiration to transcend human limits");
-    // axis
-    var x0 = nodeR+6, x1 = w-nodeR-6;
-    svg.append("line").attr("x1",x0).attr("x2",x1).attr("y1",axY).attr("y2",axY).attr("stroke",C.rule).attr("stroke-width",2);
-    svg.append("text").attr("x",x0).attr("y",axY+16).attr("text-anchor","middle").attr("fill",C.faint).attr("font-size",9.5).text("human");
-    svg.append("text").attr("x",x1).attr("y",axY+16).attr("text-anchor","middle").attr("fill",C.faint).attr("font-size",9.5).text("posthuman");
     // islands
     islands.forEach(function(d){
       var cx = x0 + d.pos*(x1-x0);
@@ -2751,7 +2754,6 @@ function wireSeg(segId, cb){
       g.on("click",function(){ sel = (sel&&sel.id===d.id)?null:d; draw(); });
     });
     // detail
-    var dy = axY + nodeR + 10;
     if(sel){
       svg.append("rect").attr("x",0).attr("y",dy).attr("width",w).attr("height",detH-4).attr("rx",4)
         .attr("fill","#f4f7f9").attr("stroke",sel.col).attr("stroke-width",1.5);
@@ -2793,8 +2795,9 @@ function wireSeg(segId, cb){
   function draw(){
     host.innerHTML = "";
     var w = W(host, 760), compact = w < 520;
-    var colW = (w-compact?0:20)/2, rowh = compact ? 128 : 84;
-    var h = Math.max(optimizes.length, requires.length)*rowh + (compact?80:62);
+    var colW = (w-(compact?0:20))/2, rowh = compact ? 128 : 84;
+    var colH = Math.max(optimizes.length, requires.length)*rowh;
+    var h = compact ? (26 + 2*colH + 60) : (28 + colH + 92);
     var svg = d3.select(host).append("svg").attr("width","100%").attr("viewBox","0 0 "+w+" "+h).attr("font-family",SANS);
     if(!compact){
       svg.append("text").attr("x",colW/2).attr("y",16).attr("text-anchor","middle")
@@ -2830,7 +2833,7 @@ function wireSeg(segId, cb){
       col(requires, (w-20)/2+20, (w-20)/2, C.accent, "R", 28);
     }
     wrappedText(svg, "\u00a7147: \u201cSchools are not called to follow the pace of the digital world, but to offer what the digital sphere by itself cannot provide.\u201d",
-      w/2, h-(compact?14:6), Math.floor((w-24)/6.4), 13,
+      w/2, h-(compact?40:50), Math.floor((w-24)/6.4), 13,
       {"text-anchor":"middle","fill":C.faint,"font-size":11});
   }
   draw();
@@ -2903,7 +2906,7 @@ function wireSeg(segId, cb){
       new:"\"Structural leverage over the future\" — controlling a people\u2019s health data enables predictive models that determine who and what matters (§178)."
     },
     {
-      dim:"What sovereignty it undermines",
+      dim:"Sovereignty undermined",
       old:"Political self-determination; the right of peoples to govern their own territories and economies.",
       new:"Epistemic sovereignty: \"entire regions are subjected to a new mindset of extraction\" (§178) — post-colonial only in name."
     },
